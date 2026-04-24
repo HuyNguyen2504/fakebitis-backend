@@ -89,5 +89,44 @@ module.exports = [
     ],
     tags: ["Best Seller"],
     category: "Running"
+  },
+  {
+    id: '6',
+    name: "Biti's Hunter - Azure Wave",
+    price: 1450000,
+    discount_price: null,
+    images: ["/uploads/bitis_blue.png"],
+    variants: [
+      { color: "#0000FF", size: "40", stock: 20 },
+      { color: "#0000FF", size: "41", stock: 25 }
+    ],
+    tags: ["New Arrival", "Premium"],
+    category: "Sneaker"
+  },
+  {
+    id: '7',
+    name: "Biti's Hunter - Crimson Blaze",
+    price: 1550000,
+    discount_price: 1350000,
+    images: ["/uploads/bitis_red.png"],
+    variants: [
+      { color: "#FF0000", size: "42", stock: 15 },
+      { color: "#FF0000", size: "43", stock: 10 }
+    ],
+    tags: ["Sale", "Premium"],
+    category: "Running"
+  },
+  {
+    id: '8',
+    name: "Biti's Hunter - Midnight Stealth",
+    price: 1600000,
+    discount_price: null,
+    images: ["/uploads/bitis_black.png"],
+    variants: [
+      { color: "#000000", size: "40", stock: 30 },
+      { color: "#000000", size: "44", stock: 12 }
+    ],
+    tags: ["Limited Edition", "Premium"],
+    category: "Sneaker"
   }
 ];

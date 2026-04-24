@@ -13,6 +13,19 @@ const applyCampaigns = (productObj, campaigns) => {
   return productObj;
 };
 
+const processImages = (productObj, req) => {
+  const baseUrl = `${req.protocol}://${req.get('host')}`;
+  if (productObj.images) {
+    productObj.images = productObj.images.map(img => {
+      if (img.startsWith('/uploads')) {
+        return `${baseUrl}${img}`;
+      }
+      return img;
+    });
+  }
+  return productObj;
+};
+
 // GET /api/products
 const getProducts = async (req, res) => {
   try {
@@ -83,7 +96,8 @@ const getProducts = async (req, res) => {
       const pObj = p.toObject();
       pObj.id = pObj._id.toString();
       delete pObj._id;
-      return applyCampaigns(pObj, activeCampaigns);
+      const campaignApplied = applyCampaigns(pObj, activeCampaigns);
+      return processImages(campaignApplied, req);
     });
 
     res.json({
@@ -119,7 +133,8 @@ const getProductById = async (req, res) => {
     pObj.id = pObj._id.toString();
     
     const finalProduct = applyCampaigns(pObj, activeCampaigns);
-    res.json(finalProduct);
+    const processedProduct = processImages(finalProduct, req);
+    res.json(processedProduct);
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server Error' });
