@@ -22,10 +22,7 @@ module.exports = [
     name: "Biti's Hunter Core - Go For Love",
     price: 899000,
     discount_price: null,
-    images: [
-      "https://product.hstatic.net/1000230642/product/dswh10600trg_1__22c83c27e4e84d4faebed6ff3a216440_1024x1024.jpg",
-      "https://product.hstatic.net/1000230642/product/dswh10600trg_2__6f049ef243af430f81d1debf6c16503c_1024x1024.jpg"
-    ],
+    images: ["/uploads/bitis_white.png"],
     variants: [
       { color: "#FFFFFF", size: "36", stock: 5 },
       { color: "#FFFFFF", size: "37", stock: 20 },
@@ -40,10 +37,7 @@ module.exports = [
     name: "Biti's Hunter Street - Vintage",
     price: 799000,
     discount_price: 699000,
-    images: [
-      "https://product.hstatic.net/1000230642/product/dsmh06500do__1__6b7b2afb5d0342939987823f66a877e5_1024x1024.jpg",
-      "https://product.hstatic.net/1000230642/product/dsmh06500do__2__c73b06bd41414eebbb733d9410efd4c1_1024x1024.jpg"
-    ],
+    images: ["/uploads/bitis_vintage.png"],
     variants: [
       { color: "#E3000F", size: "40", stock: 10 },
       { color: "#E3000F", size: "41", stock: 10 },
@@ -58,10 +52,7 @@ module.exports = [
     name: "Biti's Sandal - Ultra",
     price: 499000,
     discount_price: null,
-    images: [
-      "https://product.hstatic.net/1000230642/product/sod013700den_1_b4d32e6750a240bca9ea791c8ba6cfbb_1024x1024.jpg",
-      "https://product.hstatic.net/1000230642/product/sod013700den_2_a4e76c128c7c46efbe5b922a9a46f4eb_1024x1024.jpg"
-    ],
+    images: ["/uploads/bitis_sandal.png"],
     variants: [
       { color: "#000000", size: "39", stock: 2 },
       { color: "#000000", size: "40", stock: 8 },
