@@ -33,7 +33,7 @@ exports.createPaymentUrl = async (req, res) => {
     const vnp_Params = {
       vnp_Amount: amount * 100,
       vnp_TxnRef: order._id.toString(),
-      vnp_OrderInfo: 'Thanh toan don hang ' + order._id,
+      vnp_OrderInfo: 'Thanh toan don hang ' + order._id.toString().slice(-6),
       vnp_OrderType: ProductCode.Other,
       vnp_ReturnUrl: process.env.VNP_RETURN_URL,
       vnp_Locale: VnpLocale.VN,
@@ -48,12 +48,14 @@ exports.createPaymentUrl = async (req, res) => {
       vnp_Params.vnp_BankCode = bankCode;
     }
 
+    console.log('Creating payment with params:', vnp_Params);
     const paymentUrl = vnpay.buildPaymentUrl(vnp_Params);
+    console.log('Generated Payment URL:', paymentUrl);
 
     res.json({ url: paymentUrl });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Server Error' });
+    console.error('Payment Error:', error);
+    res.status(500).json({ message: error.message || 'Server Error' });
   }
 };
 

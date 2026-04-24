@@ -35,6 +35,20 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok' });
 });
 
+// Force Seed Route (Secret tool for production sync)
+app.get('/api/admin/force-seed', async (req, res) => {
+  try {
+    const Product = require('./models/Product');
+    const products = require('./data/products');
+    await Product.deleteMany();
+    const formattedProducts = products.map(({ id, ...rest }) => rest);
+    await Product.insertMany(formattedProducts);
+    res.json({ message: "Database seeded successfully with 9 products!" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
