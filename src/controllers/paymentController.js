@@ -6,9 +6,7 @@ const vnpay = new VNPay({
   tmnCode: process.env.VNP_TMN_CODE,
   secureSecret: process.env.VNP_HASH_SECRET,
   vnpayHost: 'https://sandbox.vnpayment.vn',
-  testMode: true,
   hashAlgorithm: 'SHA512',
-  loggerFn: ignoreLogger,
 });
 
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
@@ -16,7 +14,7 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 exports.createPaymentUrl = async (req, res) => {
   try {
     const { amount, items, address, bankCode } = req.body;
-    
+
     const order = await Order.create({
       user: req.user._id,
       items,
@@ -33,8 +31,8 @@ exports.createPaymentUrl = async (req, res) => {
     const vnp_Params = {
       vnp_Amount: amount * 100,
       vnp_TxnRef: order._id.toString(),
-      vnp_OrderInfo: 'Thanh toan don hang ' + order._id.toString().slice(-6),
-      vnp_OrderType: ProductCode.Other,
+      vnp_OrderInfo: `THANH TOAN DON HANG ${order._id.toString().toUpperCase().slice(-6)}`,
+      vnp_OrderType: ProductCode.OTHER,
       vnp_ReturnUrl: process.env.VNP_RETURN_URL,
       vnp_Locale: VnpLocale.VN,
       vnp_IpAddr: req.ip || req.headers['x-forwarded-for'] || '127.0.0.1',
