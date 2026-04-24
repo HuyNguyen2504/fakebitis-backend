@@ -4,10 +4,7 @@ module.exports = [
     name: "Biti's Hunter X - Duntless",
     price: 1099000,
     discount_price: 989000,
-    images: [
-      "https://product.hstatic.net/1000230642/product/dsmh12500den_1__96695325785f4705ba8c6a512d4fbcfd_1024x1024.jpg",
-      "https://product.hstatic.net/1000230642/product/dsmh12500den_2__ed526c8cd1cf49028a3f85dfccdf58b3_1024x1024.jpg"
-    ],
+    images: ["/uploads/bitis_duntless.png"],
     variants: [
       { color: "#000000", size: "39", stock: 10 },
       { color: "#000000", size: "40", stock: 15 },
@@ -67,10 +64,7 @@ module.exports = [
     name: "Biti's Hunter Running - Pro",
     price: 1299000,
     discount_price: 1199000,
-    images: [
-      "https://product.hstatic.net/1000230642/product/dsmh12600xam_1_0c5e7146ce244e8081f9b36ed7d152c9_1024x1024.jpg",
-      "https://product.hstatic.net/1000230642/product/dsmh12600xam_2_30be5e638d2146cb8969b4c09d587c1f_1024x1024.jpg"
-    ],
+    images: ["/uploads/bitis_pro.png"],
     variants: [
       { color: "#808080", size: "40", stock: 5 },
       { color: "#808080", size: "41", stock: 5 },
@@ -118,6 +112,20 @@ module.exports = [
       { color: "#000000", size: "44", stock: 12 }
     ],
     tags: ["Limited Edition", "Premium"],
+    category: "Sneaker"
+  },
+  {
+    id: '9',
+    name: "Biti's Hunter Street - Black Pink",
+    price: 899000,
+    discount_price: 849000,
+    images: ["/uploads/bitis_black_pink.png"],
+    variants: [
+      { color: "#000000", size: "36", stock: 10 },
+      { color: "#000000", size: "37", stock: 15 },
+      { color: "#FFC0CB", size: "38", stock: 5 }
+    ],
+    tags: ["New Arrival", "Streetwear"],
     category: "Sneaker"
   }
 ];
