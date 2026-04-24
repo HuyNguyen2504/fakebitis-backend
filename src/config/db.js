@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { MongoMemoryServer } = require('mongodb+srv://huynguyen2542004:<db_password>@cluster0.cxqqvfo.mongodb.net/?appName=Cluster0');
+const { MongoMemoryServer } = require('mongodb+srv://huynguyen2542004:<nguyenvanhuy03>@cluster0.cxqqvfo.mongodb.net/?appName=Cluster0');
 
 let mongod = null;
 
