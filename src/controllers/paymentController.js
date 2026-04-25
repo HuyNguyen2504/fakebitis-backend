@@ -14,7 +14,11 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
 exports.createPaymentUrl = async (req, res) => {
   try {
-    console.log('--- VNPAY: START CREATING PAYMENT URL ---');
+    const secret = process.env.VNP_HASH_SECRET || '';
+    console.log(`--- VNPAY DEBUG ---`);
+    console.log(`TMN_CODE: ${process.env.VNP_TMN_CODE}`);
+    console.log(`SECRET (First 4): ${secret.substring(0, 4)}...`);
+    
     const { amount, items, address, bankCode } = req.body;
 
     const order = await Order.create({
@@ -26,14 +30,21 @@ exports.createPaymentUrl = async (req, res) => {
       paymentMethod: 'VNPAY'
     });
 
+    // Dynamic Return URL for production
+    const host = req.get('host');
+    const protocol = req.protocol;
+    const returnUrl = host.includes('localhost') 
+      ? process.env.VNP_RETURN_URL 
+      : `${protocol}://${host}/api/payment/vnpay_return`;
+
     const vnp_Params = {
       vnp_Amount: Math.round(Number(amount) * 100),
       vnp_TxnRef: order._id.toString(),
       vnp_OrderInfo: `THANH TOAN DON HANG ${order._id.toString().toUpperCase().slice(-6)}`,
       vnp_OrderType: 'other',
-      vnp_ReturnUrl: process.env.VNP_RETURN_URL,
+      vnp_ReturnUrl: returnUrl,
       vnp_Locale: VnpLocale.VN,
-      vnp_IpAddr: '13.160.92.202', // Use fixed test IP
+      vnp_IpAddr: '13.160.92.202',
     };
 
     if (bankCode && bankCode !== '') {
