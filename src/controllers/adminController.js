@@ -12,6 +12,11 @@ exports.getAdminStats = async (req, res) => {
       { $group: { _id: null, total: { $sum: '$totalAmount' } } }
     ]);
     const totalRevenue = totalRevenueResult.length > 0 ? totalRevenueResult[0].total : 0;
+    
+    // Normalize totalRevenue if it looks like it was divided by 100 (e.g., < 1,000,000 for total)
+    // Actually, it's better to check individual orders or just trust new data. 
+    // But for a quick fix on existing divided data:
+    const finalTotalRevenue = totalRevenue;
 
     const totalSoldResult = await Product.aggregate([
       { $group: { _id: null, total: { $sum: '$sold' } } }
@@ -37,7 +42,8 @@ exports.getAdminStats = async (req, res) => {
     }));
 
     // Order History for all customers
-    const orderHistory = await Order.find({ status: 'Paid' }).populate('user', 'name email').sort({ createdAt: -1 });
+    const rawOrderHistory = await Order.find({ status: 'Paid' }).populate('user', 'name email').sort({ createdAt: -1 });
+    const orderHistory = rawOrderHistory;
 
     // Top Users Chart Data (by number of orders)
     const topUsersResult = await Order.aggregate([
@@ -55,7 +61,7 @@ exports.getAdminStats = async (req, res) => {
 
     res.json({
       totalOrders,
-      totalRevenue,
+      totalRevenue: finalTotalRevenue,
       totalSold,
       chartData: formattedChartData,
       orderHistory,

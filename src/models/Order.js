@@ -25,6 +25,7 @@ const orderSchema = new mongoose.Schema({
   status: { type: String, enum: ['Pending', 'Paid', 'Failed'], default: 'Pending' },
   paymentMethod: { type: String, default: 'VNPAY' },
   transactionId: { type: String },
+  hiddenByUser: { type: Boolean, default: false },
 }, { timestamps: true });
 
 module.exports = mongoose.model('Order', orderSchema);

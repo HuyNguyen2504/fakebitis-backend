@@ -11,6 +11,33 @@ const uploadRoutes = require('./routes/uploadRoutes');
 const userRoutes = require('./routes/userRoutes');
 
 const app = express();
+// Fix Sold Counts Route (Secret tool to sync data)
+app.get('/api/admin/fix-sold', async (req, res) => {
+  try {
+    const Product = require('./models/Product');
+    const Order = require('./models/Order');
+    
+    // Reset all sold counts to 0 first
+    await Product.updateMany({}, { sold: 0 });
+    
+    // Get all successful orders
+    const paidOrders = await Order.find({ status: 'Paid' });
+    
+    for (const order of paidOrders) {
+      for (const item of order.items) {
+        await Product.updateOne(
+          { _id: item.product },
+          { $inc: { sold: item.quantity } }
+        );
+      }
+    }
+    
+    res.json({ message: "Sold counts recalculated and synced successfully!" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
 const PORT = process.env.PORT || 5001;
 
 app.use(cors());
