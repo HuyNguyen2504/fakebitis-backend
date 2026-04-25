@@ -14,11 +14,6 @@ const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
 
 exports.createPaymentUrl = async (req, res) => {
   try {
-    const secret = process.env.VNP_HASH_SECRET || '';
-    console.log(`--- VNPAY DEBUG ---`);
-    console.log(`TMN_CODE: ${process.env.VNP_TMN_CODE}`);
-    console.log(`SECRET (First 4): ${secret.substring(0, 4)}...`);
-    
     const { amount, items, address, bankCode } = req.body;
 
     const order = await Order.create({
@@ -68,13 +63,57 @@ exports.vnpayReturn = async (req, res) => {
     const orderId = req.query.vnp_TxnRef;
 
     if (verify.isSuccess) {
-      return res.redirect(`${FRONTEND_URL}/history?status=success`);
+      // For localhost or when IPN is delayed, update status here too
+      const order = await Order.findById(orderId);
+      if (order && order.status === 'Pending') {
+        order.status = 'Paid';
+        order.transactionId = req.query.vnp_TransactionNo;
+        await order.save();
+
+        // Update product sold counts and stock
+        for (const item of order.items) {
+          await Product.updateOne(
+            { _id: item.product },
+            { $inc: { sold: item.quantity } }
+          );
+          // Also update variant stock if possible
+          await Product.updateOne(
+            { _id: item.product, 'variants.color': item.color, 'variants.size': item.size },
+            { $inc: { 'variants.$.stock': -item.quantity } }
+          );
+        }
+      }
+      return res.redirect(`${FRONTEND_URL}/history?status=success&orderId=${orderId}`);
     } else {
+      const order = await Order.findById(orderId);
+      if (order && order.status === 'Pending') {
+        order.status = 'Failed';
+        await order.save();
+      }
       return res.redirect(`${FRONTEND_URL}/history?status=failed&code=${req.query.vnp_ResponseCode}`);
     }
   } catch (error) {
     console.error(error);
     res.redirect(`${FRONTEND_URL}/history?status=error`);
+  }
+};
+
+exports.deleteOrder = async (req, res) => {
+  try {
+    const order = await Order.findById(req.params.id);
+    if (!order) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    // Only allow users to delete their own orders or if they are admin
+    if (order.user.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(401).json({ message: 'Not authorized' });
+    }
+
+    await order.deleteOne();
+    res.json({ message: 'Order removed' });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
   }
 };
 
