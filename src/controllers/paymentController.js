@@ -28,12 +28,14 @@ exports.createPaymentUrl = async (req, res) => {
     // Dynamic Return URL for production
     const host = req.get('host');
     const protocol = req.protocol;
-    const returnUrl = host.includes('localhost') 
-      ? process.env.VNP_RETURN_URL 
-      : `${protocol}://${host}/api/payment/vnpay_return`;
+    // Hardcode or use env to avoid dynamic path issues
+    let returnUrl = process.env.VNP_RETURN_URL;
+    if (!host.includes('localhost') || !returnUrl) {
+      returnUrl = `${protocol}://${host}/api/payment/vnpay_return`;
+    }
 
     const vnp_Params = {
-      vnp_Amount: Math.round(Number(amount)), // Use original amount (e.g., 899000)
+      vnp_Amount: Math.round(Number(amount)), 
       vnp_TxnRef: order._id.toString(),
       vnp_OrderInfo: `THANH TOAN DON HANG ${order._id.toString().toUpperCase().slice(-6)}`,
       vnp_OrderType: 'other',
@@ -48,8 +50,6 @@ exports.createPaymentUrl = async (req, res) => {
 
     console.log('VNPAY Params:', vnp_Params);
     const paymentUrl = vnpay.buildPaymentUrl(vnp_Params);
-    console.log('Generated URL:', paymentUrl);
-
     res.json({ url: paymentUrl });
   } catch (error) {
     console.error('VNPAY ERROR:', error);
@@ -131,8 +131,15 @@ exports.vnpayIpn = async (req, res) => {
     }
 
     const orderId = req.query.vnp_TxnRef;
+    const vnpAmount = Number(req.query.vnp_Amount) / 100; // VNPAY amount is multiplied by 100
     
     if (req.query.vnp_ResponseCode === '00') {
+      // Validate amount before updating
+      const checkOrder = await Order.findById(orderId);
+      if (!checkOrder || Math.round(checkOrder.totalAmount) !== Math.round(vnpAmount)) {
+          return res.status(200).json({ RspCode: '04', Message: 'Invalid amount' });
+      }
+
       // Use Atomic update here too
       const order = await Order.findOneAndUpdate(
         { _id: orderId, status: 'Pending' },
