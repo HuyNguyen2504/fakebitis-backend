@@ -8,18 +8,32 @@ const connectDB = async () => {
     await mongoose.connect(mongoURI);
     console.log(`MongoDB Connected: ${mongoose.connection.host}`);
 
-    // Seed data automatically if database is empty
+    // --- SEEDING LOGIC ---
+    const Category = require('../models/Category');
     const Product = require('../models/Product');
-    const mockProducts = require('../data/products');
-    const count = await Product.countDocuments();
+    const productsData = require('../data/products');
+
+    const catCount = await Category.countDocuments();
+    let categories = [];
     
-    if (count === 0) {
-      const seedData = mockProducts.map(({ id, ...rest }) => ({
+    if (catCount === 0) {
+      const catNames = ['Sneaker', 'Running', 'Sandal', 'Slip-on', 'Apparel', 'Accessories'];
+      categories = await Category.insertMany(catNames.map(name => ({ name })));
+      console.log('Default categories seeded!');
+    } else {
+      categories = await Category.find();
+    }
+
+    const prodCount = await Product.countDocuments();
+    if (prodCount === 0) {
+      const catMap = categories.reduce((map, cat) => ({ ...map, [cat.name]: cat._id }), {});
+      const seedData = productsData.map(({ id, category, ...rest }) => ({
         ...rest,
+        categories: [catMap[category] || categories[0]._id],
         sold: 0
       }));
       await Product.insertMany(seedData);
-      console.log('Database seeded with initial products.');
+      console.log('Database seeded with initial products and category links.');
     }
   } catch (error) {
     console.error('MongoDB connection error:', error);

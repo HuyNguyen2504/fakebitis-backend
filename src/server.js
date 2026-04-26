@@ -50,18 +50,7 @@ app.use((req, res, next) => {
 });
 
 // Connect Database
-connectDB().then(async () => {
-  // Seed basic categories if none exist
-  try {
-    const Category = require('./models/Category');
-    const count = await Category.countDocuments();
-    if (count === 0) {
-      const defaults = ['Sneaker', 'Running', 'Sandal', 'Slip-on', 'Apparel', 'Accessories'];
-      await Category.insertMany(defaults.map(name => ({ name })));
-      console.log('Default categories seeded!');
-    }
-  } catch (err) { console.error('Seeding failed', err); }
-});
+connectDB();
 
 // Static folder for uploads
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
