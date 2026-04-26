@@ -13,7 +13,7 @@ const productSchema = new mongoose.Schema({
   images: [{ type: String }],
   variants: [variantSchema],
   tags: [{ type: String }],
-  category: { type: String },
+  categories: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Category' }],
   sold: { type: Number, default: 0 }
 }, { timestamps: true });
 

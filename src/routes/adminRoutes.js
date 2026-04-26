@@ -7,7 +7,11 @@ const {
   getCampaigns,
   createCampaign,
   updateCampaign,
-  deleteCampaign
+  deleteCampaign,
+  getCategories,
+  createCategory,
+  updateCategory,
+  deleteCategory
 } = require('../controllers/adminController');
 const { protect, admin } = require('../middleware/auth');
 
@@ -22,5 +26,10 @@ router.get('/campaigns', protect, admin, getCampaigns);
 router.post('/campaigns', protect, admin, createCampaign);
 router.put('/campaigns/:id', protect, admin, updateCampaign);
 router.delete('/campaigns/:id', protect, admin, deleteCampaign);
+
+router.get('/categories', protect, admin, getCategories);
+router.post('/categories', protect, admin, createCategory);
+router.put('/categories/:id', protect, admin, updateCategory);
+router.delete('/categories/:id', protect, admin, deleteCategory);
 
 module.exports = router;

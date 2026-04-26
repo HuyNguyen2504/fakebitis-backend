@@ -1,5 +1,6 @@
 const Order = require('../models/Order');
 const Product = require('../models/Product');
+const Category = require('../models/Category');
 const SaleCampaign = require('../models/SaleCampaign');
 const moment = require('moment');
 
@@ -59,6 +60,19 @@ exports.getAdminStats = async (req, res) => {
     // Shoes Sold By Product
     const shoesSoldData = await Product.find({}, 'name images sold').sort({ sold: -1 });
 
+    // Shoes Sold By Category
+    const shoesSoldByCategory = await Product.aggregate([
+      { $unwind: '$categories' },
+      { $group: { _id: '$categories', soldCount: { $sum: '$sold' } } },
+      { $lookup: { from: 'categories', localField: '_id', foreignField: '_id', as: 'catInfo' } },
+      { $unwind: '$catInfo' },
+      { $sort: { soldCount: -1 } },
+      { $project: { name: '$catInfo.name', soldCount: 1, _id: 0 } }
+    ]);
+
+    // Global Categories list for admin
+    const categories = await Category.find().sort({ name: 1 });
+
     res.json({
       totalOrders,
       totalRevenue: finalTotalRevenue,
@@ -66,7 +80,9 @@ exports.getAdminStats = async (req, res) => {
       chartData: formattedChartData,
       orderHistory,
       topUsers: topUsersResult,
-      shoesSoldData
+      shoesSoldData,
+      shoesSoldByCategory,
+      categories
     });
   } catch (error) {
     console.error(error);
@@ -173,6 +189,64 @@ exports.deleteCampaign = async (req, res) => {
       await SaleCampaign.findByIdAndDelete(req.params.id);
     }
     res.json({ message: 'Campaign deleted' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// Category CRUD
+exports.getCategories = async (req, res) => {
+  try {
+    const categories = await Category.find().sort({ name: 1 });
+    res.json(categories);
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+exports.createCategory = async (req, res) => {
+  try {
+    const category = await Category.create(req.body);
+    res.status(201).json(category);
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+exports.updateCategory = async (req, res) => {
+  try {
+    const category = await Category.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(category);
+  } catch (error) {
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+exports.deleteCategory = async (req, res) => {
+  try {
+    const categoryId = req.params.id;
+    
+    // Check for products where this is the ONLY category
+    const linkedProducts = await Product.find({ categories: categoryId });
+    
+    const blockList = linkedProducts.filter(p => p.categories.length === 1);
+    
+    if (blockList.length > 0) {
+      const names = blockList.map(p => p.name).join(', ');
+      return res.status(400).json({ 
+        message: `Cần thêm hoặc thay đổi catagory trước khi xóa sản phẩm: { ${names} } này` 
+      });
+    }
+    
+    // If not blocked, we can safely remove the category from all products that have it along with others
+    await Product.updateMany(
+      { categories: categoryId },
+      { $pull: { categories: categoryId } }
+    );
+    
+    await Category.findByIdAndDelete(categoryId);
+    res.json({ message: 'Category deleted' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server Error' });

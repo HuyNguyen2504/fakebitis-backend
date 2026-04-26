@@ -1,4 +1,5 @@
 const Product = require('../models/Product');
+const Category = require('../models/Category');
 const SaleCampaign = require('../models/SaleCampaign');
 
 const applyCampaigns = (productObj, campaigns) => {
@@ -48,13 +49,15 @@ const getProducts = async (req, res) => {
     }
 
     if (category) {
-      const categories = category.split(',').map(c => new RegExp(`^${c}$`, 'i'));
-      query.category = { $in: categories };
+      const categoryNames = category.split(',');
+      const foundCategories = await Category.find({ name: { $in: categoryNames.map(c => new RegExp(`^${c}$`, 'i')) } });
+      const categoryIds = foundCategories.map(c => c._id);
+      query.categories = { $in: categoryIds };
     }
 
     if (color) {
-      const colors = color.split(',').map(c => new RegExp(`^${c}$`, 'i'));
-      query.color = { $in: colors };
+      const colors = color.split(',');
+      query['variants.color'] = { $in: colors.map(c => new RegExp(`^${c}$`, 'i')) };
     }
 
     if (minPrice || maxPrice) {
@@ -67,7 +70,7 @@ const getProducts = async (req, res) => {
 
     if (sizes) {
       const sizesArr = sizes.split(',');
-      query.sizes = { $elemMatch: { size: { $in: sizesArr }, stock: { $gt: 0 } } };
+      query.variants = { $elemMatch: { size: { $in: sizesArr }, stock: { $gt: 0 } } };
     }
 
     let sortObj = {};
@@ -82,7 +85,7 @@ const getProducts = async (req, res) => {
     const skip = (pageNum - 1) * limitNum;
 
     const total = await Product.countDocuments(query);
-    let products = await Product.find(query).sort(sortObj).skip(skip).limit(limitNum);
+    let products = await Product.find(query).populate('categories').sort(sortObj).skip(skip).limit(limitNum);
 
     // Fetch active campaigns
     const now = new Date();
@@ -117,7 +120,7 @@ const getProducts = async (req, res) => {
 const getProductById = async (req, res) => {
   try {
     const { id } = req.params;
-    const product = await Product.findById(id);
+    const product = await Product.findById(id).populate('categories');
 
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
@@ -144,8 +147,25 @@ const getProductById = async (req, res) => {
 // GET /api/products/categories
 const getCategories = async (req, res) => {
   try {
-    const categories = await Product.distinct('category');
-    res.json(categories.filter(c => c)); // filter out nulls/empty
+    const categories = await Category.find().sort({ name: 1 });
+    res.json(categories.map(c => c.name)); 
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server Error' });
+  }
+};
+
+// GET /api/products/colors
+const getColors = async (req, res) => {
+  try {
+    const products = await Product.find({}, 'variants.color');
+    const colors = new Set();
+    products.forEach(p => {
+      p.variants.forEach(v => {
+        if (v.color) colors.add(v.color.toUpperCase());
+      });
+    });
+    res.json(Array.from(colors).sort());
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Server Error' });
@@ -155,5 +175,6 @@ const getCategories = async (req, res) => {
 module.exports = {
   getProducts,
   getProductById,
-  getCategories
+  getCategories,
+  getColors
 };
