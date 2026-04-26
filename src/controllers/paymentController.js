@@ -35,7 +35,7 @@ exports.createPaymentUrl = async (req, res) => {
     }
 
     const vnp_Params = {
-      vnp_Amount: Math.round(Number(amount)), 
+      vnp_Amount: Math.round(Number(amount) * 100), // VNPAY requires amount * 100
       vnp_TxnRef: order._id.toString(),
       vnp_OrderInfo: `THANH TOAN DON HANG ${order._id.toString().toUpperCase().slice(-6)}`,
       vnp_OrderType: 'other',
@@ -73,12 +73,18 @@ exports.vnpayReturn = async (req, res) => {
         { new: true }
       );
 
-      // If order was found and updated, increment sold counts
+      // If order was found and updated, increment sold counts and decrement stock
       if (order) {
         for (const item of order.items) {
+          // Update total sold for product
           await Product.updateOne({ _id: item.product }, { $inc: { sold: item.quantity } });
+          
+          // Update specific variant stock using $elemMatch to be safe
           await Product.updateOne(
-            { _id: item.product, 'variants.color': item.color, 'variants.size': item.size },
+            { 
+              _id: item.product, 
+              variants: { $elemMatch: { color: item.color, size: item.size } } 
+            },
             { $inc: { 'variants.$.stock': -item.quantity } }
           );
         }
@@ -155,7 +161,10 @@ exports.vnpayIpn = async (req, res) => {
         for (const item of order.items) {
           await Product.updateOne({ _id: item.product }, { $inc: { sold: item.quantity } });
           await Product.updateOne(
-            { _id: item.product, 'variants.color': item.color, 'variants.size': item.size },
+            { 
+              _id: item.product, 
+              variants: { $elemMatch: { color: item.color, size: item.size } } 
+            },
             { $inc: { 'variants.$.stock': -item.quantity } }
           );
         }
