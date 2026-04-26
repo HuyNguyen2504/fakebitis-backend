@@ -12,27 +12,39 @@ const userRoutes = require('./routes/userRoutes');
 
 const app = express();
 // Fix Sold Counts Route (Secret tool to sync data)
+// Fix Sold Counts Route (Advanced Recovery)
 app.get('/api/admin/fix-sold', async (req, res) => {
   try {
     const Product = require('./models/Product');
     const Order = require('./models/Order');
     
-    // Reset all sold counts to 0 first
+    // 1. Reset all sold counts to 0
     await Product.updateMany({}, { sold: 0 });
     
-    // Get all successful orders
-    const paidOrders = await Order.find({ status: 'Paid' });
+    // 2. Get all successful orders
+    const paidOrders = await Order.find({ status: { $in: ['Paid', 'Delivered'] } }).populate('items.product');
     
+    let updatedCount = 0;
     for (const order of paidOrders) {
       for (const item of order.items) {
-        await Product.updateOne(
-          { _id: item.product },
-          { $inc: { sold: item.quantity } }
-        );
+        // Try to match by ID first, then by Name if ID is broken (due to re-seeding)
+        let product = await Product.findById(item.product);
+        if (!product && item.name) {
+          product = await Product.findOne({ name: item.name });
+        }
+
+        if (product) {
+          product.sold = (product.sold || 0) + item.quantity;
+          await product.save();
+          updatedCount++;
+        }
       }
     }
     
-    res.json({ message: "Sold counts recalculated and synced successfully!" });
+    res.json({ 
+      message: "Sales statistics synchronized!", 
+      details: `Processed ${paidOrders.length} orders and updated ${updatedCount} product sales records.` 
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
