@@ -50,7 +50,18 @@ app.use((req, res, next) => {
 });
 
 // Connect Database
-connectDB();
+connectDB().then(async () => {
+  // Seed basic categories if none exist
+  try {
+    const Category = require('./models/Category');
+    const count = await Category.countDocuments();
+    if (count === 0) {
+      const defaults = ['Sneaker', 'Running', 'Sandal', 'Slip-on', 'Apparel', 'Accessories'];
+      await Category.insertMany(defaults.map(name => ({ name })));
+      console.log('Default categories seeded!');
+    }
+  } catch (err) { console.error('Seeding failed', err); }
+});
 
 // Static folder for uploads
 app.use('/uploads', express.static(path.join(__dirname, '../public/uploads')));
@@ -72,11 +83,27 @@ app.get('/api/health', (req, res) => {
 app.get('/api/admin/force-seed', async (req, res) => {
   try {
     const Product = require('./models/Product');
-    const products = require('./data/products');
+    const Category = require('./models/Category');
+    const productsData = require('./data/products');
+    
+    // 1. Clear everything
     await Product.deleteMany();
-    const formattedProducts = products.map(({ id, ...rest }) => rest);
+    await Category.deleteMany();
+
+    // 2. Seed Categories
+    const catNames = ['Sneaker', 'Running', 'Sandal', 'Slip-on', 'Apparel', 'Accessories'];
+    const categories = await Category.insertMany(catNames.map(name => ({ name })));
+    const catMap = categories.reduce((map, cat) => ({ ...map, [cat.name]: cat._id }), {});
+
+    // 3. Seed Products with Category IDs
+    const formattedProducts = productsData.map(({ id, category, ...rest }) => {
+      // Find matching category ID or fallback to the first one
+      const catId = catMap[category] || categories[0]._id;
+      return { ...rest, categories: [catId] };
+    });
+    
     await Product.insertMany(formattedProducts);
-    res.json({ message: "Database seeded successfully with 9 products!" });
+    res.json({ message: "Database reset and seeded successfully with categories and products!" });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
