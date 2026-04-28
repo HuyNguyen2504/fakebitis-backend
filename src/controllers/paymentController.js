@@ -35,7 +35,7 @@ exports.createPaymentUrl = async (req, res) => {
     }
 
     const vnp_Params = {
-      vnp_Amount: Math.round(Number(amount) * 100), // VNPAY requires amount * 100
+      vnp_Amount: Math.round(Number(amount)), 
       vnp_TxnRef: order._id.toString(),
       vnp_OrderInfo: `THANH TOAN DON HANG ${order._id.toString().toUpperCase().slice(-6)}`,
       vnp_OrderType: 'other',
